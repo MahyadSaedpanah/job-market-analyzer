@@ -4,7 +4,11 @@ from urllib.parse import quote
 import json
 from pathlib import Path    
 
-from playwright.async_api import async_playwright
+from playwright.async_api import (
+    async_playwright,
+    Error as PlaywrightError,
+    TimeoutError as PlaywrightTimeoutError,
+)
 
 from config import SEARCH_QUERIES
 
@@ -94,6 +98,56 @@ async def collect_single_query(
 
     return jobs
 
+async def collect_query_with_retries(
+    page,
+    keyword,
+    max_retries=3,
+):
+    for attempt in range(1, max_retries + 1):
+        try:
+            jobs = await collect_single_query(
+                page=page,
+                keyword=keyword,
+            )
+
+            return jobs
+
+        except (
+            PlaywrightTimeoutError,
+            PlaywrightError,
+        ) as error:
+            print(
+                f"\nQuery failed: {keyword}"
+            )
+
+            print(
+                f"Attempt {attempt}/{max_retries}"
+            )
+
+            print(
+                f"Error: {type(error).__name__}: {error}"
+            )
+
+            if attempt < max_retries:
+                wait_seconds = attempt * 3
+
+                print(
+                    f"Retrying in {wait_seconds} seconds..."
+                )
+
+                await page.wait_for_timeout(
+                    wait_seconds * 1000
+                )
+
+            else:
+                print(
+                    f"Query permanently failed "
+                    f"after {max_retries} attempts: "
+                    f"{keyword}"
+                )
+
+    return None
+
 
 def flatten_queries():
     queries = []
@@ -172,10 +226,17 @@ async def collect_multiple_queries(test_limit=None):
             )
             print("=" * 60)
 
-            jobs = await collect_single_query(
+            jobs = await collect_query_with_retries(
                 page=page,
                 keyword=keyword,
             )
+
+            if jobs is None:
+                print(
+                    f"Skipping failed query: {keyword}"
+                )
+
+                continue
 
             executed_queries += 1
             total_raw_results += len(jobs)
