@@ -19,6 +19,140 @@ TEST_JOB_IDS = [
 ]
 
 
+# --------------------------------------------------
+# Bilingual labels
+# --------------------------------------------------
+
+SECTION_LABELS = {
+    "key_requirements": [
+        "key Requirements",
+        "Key Requirements",
+        "شاخص های کلیدی از نظر کارفرما",
+        "شاخص‌های کلیدی از نظر کارفرما",
+    ],
+
+    "job_description": [
+        "Job Description",
+        "شرح شغل و وظایف",
+    ],
+
+    "job_requirements": [
+        "Job Requirements",
+        "شرایط احراز شغل",
+    ],
+}
+
+JOB_REQUIREMENTS_END_LABELS = [
+    # Persian
+    "ثبت مشکل و تخلف آگهی",
+    "موقعیت های شغلی مشابه",
+    "موقعیت‌های شغلی مشابه",
+    "ارسال رزومه",
+
+    # English fallbacks
+    "Report Job",
+    "Similar Jobs",
+    "Apply",
+]
+
+
+FIELD_LABELS = {
+    "company_size": [
+        "Company Size",
+        "اندازه سازمان",
+    ],
+
+    "industry": [
+        "Industry",
+        "صنعت",
+    ],
+
+    "company_type": [
+        "Company Type",
+        "نوع فعالیت",
+    ],
+
+    "establishment_year": [
+        "Establishment year",
+        "سال تاسیس",
+        "سال تأسیس",
+    ],
+
+    "ownership_type": [
+        "Ownership type",
+        "نوع مالکیت",
+        "مالکیت",
+    ],
+
+    "working_days": [
+        "Working days and hours",
+        "روز و ساعت کاری",
+        "روزها و ساعات کاری",
+    ],
+
+    "business_trips": [
+        "Business trips",
+        "سفرهای کاری",
+    ],
+
+    "facilities": [
+        "Facilities and Benefits",
+        "مزایا و تسهیلات",
+    ],
+
+    "gender": [
+        "Gender",
+        "جنسیت",
+    ],
+
+    "education": [
+        "Education",
+        "تحصیلات",
+    ],
+
+    "military_service": [
+        "Military Service",
+        "Military service",
+        "وضعیت نظام وظیفه",
+        "خدمت سربازی",
+    ],
+}
+
+
+SOFTWARE_LEVEL_MAP = {
+    # English
+    "basic": "Basic",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced",
+    "expert": "Expert",
+
+    # Persian
+    "مقدماتی": "Basic",
+    "متوسط": "Intermediate",
+    "پیشرفته": "Advanced",
+    "حرفه ای": "Expert",
+    "حرفه‌ای": "Expert",
+}
+
+
+# --------------------------------------------------
+# Text helpers
+# --------------------------------------------------
+
+def normalize_text(text):
+    if text is None:
+        return ""
+
+    return (
+        text
+        .replace("\u200c", " ")
+        .replace("ي", "ی")
+        .replace("ك", "ک")
+        .strip()
+        .lower()
+    )
+
+
 def clean_lines(text):
     return [
         line.strip()
@@ -27,18 +161,27 @@ def clean_lines(text):
     ]
 
 
-def find_index(lines, value):
-    value = value.lower()
+def find_index_any(lines, labels):
+    normalized_labels = {
+        normalize_text(label)
+        for label in labels
+    }
 
     for index, line in enumerate(lines):
-        if line.lower() == value:
+        if normalize_text(line) in normalized_labels:
             return index
 
     return None
 
 
-def get_value_after_label(lines, label):
-    index = find_index(lines, label)
+def get_value_after_labels(
+    lines,
+    labels,
+):
+    index = find_index_any(
+        lines,
+        labels,
+    )
 
     if index is None:
         return None
@@ -51,42 +194,57 @@ def get_value_after_label(lines, label):
 
 def extract_section(
     lines,
-    start_label,
-    end_label,
+    start_labels,
+    end_labels,
 ):
-    start_index = find_index(
+    start_index = find_index_any(
         lines,
-        start_label,
+        start_labels,
     )
 
     if start_index is None:
         return []
 
-    end_index = find_index(
-        lines,
-        end_label,
-    )
+    content_start = start_index + 1
 
-    start_index += 1
+    normalized_end_labels = {
+        normalize_text(label)
+        for label in end_labels
+    }
 
-    if (
-        end_index is None
-        or end_index <= start_index
+    end_index = None
+
+    # فقط بعد از start دنبال پایان section بگرد
+    for index in range(
+        content_start,
+        len(lines),
     ):
-        return lines[start_index:]
+        if (
+            normalize_text(lines[index])
+            in normalized_end_labels
+        ):
+            end_index = index
+            break
+
+    if end_index is None:
+        return lines[content_start:]
 
     return lines[
-        start_index:end_index
+        content_start:end_index
     ]
 
 
-def extract_software_from_key_requirements(lines):
+# --------------------------------------------------
+# Structured extraction
+# --------------------------------------------------
+
+def extract_software_from_key_requirements(
+    lines,
+):
     software = []
 
     pattern = re.compile(
-        r"^(.*?)\s*-\s*"
-        r"(Basic|Intermediate|Advanced|Expert)$",
-        re.IGNORECASE,
+        r"^(.*?)\s*-\s*(.*?)$"
     )
 
     for line in lines:
@@ -95,10 +253,28 @@ def extract_software_from_key_requirements(lines):
         if not match:
             continue
 
+        name = match.group(1).strip()
+        raw_level = match.group(2).strip()
+
+        normalized_level = normalize_text(
+            raw_level
+        )
+
+        if (
+            normalized_level
+            not in SOFTWARE_LEVEL_MAP
+        ):
+            continue
+
         software.append(
             {
-                "name": match.group(1).strip(),
-                "level": match.group(2).strip(),
+                "name": name,
+                "level": (
+                    SOFTWARE_LEVEL_MAP[
+                        normalized_level
+                    ]
+                ),
+                "raw_level": raw_level,
             }
         )
 
@@ -106,17 +282,17 @@ def extract_software_from_key_requirements(lines):
 
 
 def extract_experience(lines):
-    keywords = [
+    experience_keywords = [
         "experience",
         "سابقه",
     ]
 
     for line in lines:
-        normalized = line.lower()
+        normalized = normalize_text(line)
 
         if any(
             keyword in normalized
-            for keyword in keywords
+            for keyword in experience_keywords
         ):
             return line
 
@@ -127,10 +303,18 @@ def extract_top_metadata(
     lines,
     title,
 ):
-    try:
-        title_index = lines.index(title)
+    normalized_title = normalize_text(
+        title
+    )
 
-    except ValueError:
+    title_index = None
+
+    for index, line in enumerate(lines):
+        if normalize_text(line) == normalized_title:
+            title_index = index
+            break
+
+    if title_index is None:
         return {
             "posted": None,
             "company_name": None,
@@ -166,7 +350,6 @@ async def get_job_title(page):
             .inner_text()
         ).strip()
 
-    # fallback
     h1 = page.locator("h1")
 
     if await h1.count() > 0:
@@ -176,6 +359,10 @@ async def get_job_title(page):
 
     return None
 
+
+# --------------------------------------------------
+# Main parser
+# --------------------------------------------------
 
 async def parse_job(
     page,
@@ -194,7 +381,9 @@ async def parse_job(
 
     await page.wait_for_timeout(3000)
 
-    title = await get_job_title(page)
+    title = await get_job_title(
+        page
+    )
 
     body_text = await page.locator(
         "body"
@@ -204,15 +393,31 @@ async def parse_job(
         body_text
     )
 
+    # ----------------------------------------
+    # Top metadata
+    # ----------------------------------------
+
     top_metadata = extract_top_metadata(
         lines,
         title,
     )
 
+    # ----------------------------------------
+    # Key requirements
+    # ----------------------------------------
+
     key_requirements = extract_section(
         lines,
-        "key Requirements",
-        "Job Description",
+        SECTION_LABELS[
+            "key_requirements"
+        ],
+        SECTION_LABELS[
+            "job_description"
+        ],
+    )
+
+    experience = extract_experience(
+        key_requirements
     )
 
     software = (
@@ -221,46 +426,88 @@ async def parse_job(
         )
     )
 
-    experience = extract_experience(
-        key_requirements
-    )
+    # ----------------------------------------
+    # Job description
+    # ----------------------------------------
 
-    job_description_lines = extract_section(
-        lines,
-        "Job Description",
-        "Job Requirements",
+    job_description_lines = (
+        extract_section(
+            lines,
+            SECTION_LABELS[
+                "job_description"
+            ],
+            SECTION_LABELS[
+                "job_requirements"
+            ],
+        )
     )
 
     job_description = "\n".join(
         job_description_lines
     )
 
+    # ----------------------------------------
+    # Job requirements section
+    # ----------------------------------------
+
+    job_requirements_lines = (
+        extract_section(
+            lines,
+            SECTION_LABELS[
+                "job_requirements"
+            ],
+            JOB_REQUIREMENTS_END_LABELS,
+        )
+    )
+
+    # ----------------------------------------
+    # Company info
+    # ----------------------------------------
+
     company_info = {
-        "size": get_value_after_label(
+        "size": get_value_after_labels(
             lines,
-            "Company Size",
+            FIELD_LABELS[
+                "company_size"
+            ],
         ),
-        "industry": get_value_after_label(
+
+        "industry": get_value_after_labels(
             lines,
-            "Industry",
+            FIELD_LABELS[
+                "industry"
+            ],
         ),
-        "type": get_value_after_label(
+
+        "type": get_value_after_labels(
             lines,
-            "Company Type",
+            FIELD_LABELS[
+                "company_type"
+            ],
         ),
+
         "establishment_year": (
-            get_value_after_label(
+            get_value_after_labels(
                 lines,
-                "Establishment year",
+                FIELD_LABELS[
+                    "establishment_year"
+                ],
             )
         ),
+
         "ownership_type": (
-            get_value_after_label(
+            get_value_after_labels(
                 lines,
-                "Ownership type",
+                FIELD_LABELS[
+                    "ownership_type"
+                ],
             )
         ),
     }
+
+    # ----------------------------------------
+    # Final object
+    # ----------------------------------------
 
     job = {
         "job_id": job_id,
@@ -269,54 +516,90 @@ async def parse_job(
         "title": title,
 
         "company_name": (
-            top_metadata["company_name"]
+            top_metadata[
+                "company_name"
+            ]
         ),
 
         "location": (
-            top_metadata["location"]
+            top_metadata[
+                "location"
+            ]
         ),
 
         "employment_type": (
-            top_metadata["employment_type"]
+            top_metadata[
+                "employment_type"
+            ]
         ),
 
         "posted": (
-            top_metadata["posted"]
+            top_metadata[
+                "posted"
+            ]
         ),
 
         "working_days_and_hours": (
-            get_value_after_label(
+            get_value_after_labels(
                 lines,
-                "Working days and hours",
+                FIELD_LABELS[
+                    "working_days"
+                ],
             )
         ),
 
         "business_trips": (
-            get_value_after_label(
+            get_value_after_labels(
                 lines,
-                "Business trips",
+                FIELD_LABELS[
+                    "business_trips"
+                ],
             )
         ),
 
         "facilities_and_benefits": (
-            get_value_after_label(
+            get_value_after_labels(
                 lines,
-                "Facilities and Benefits",
+                FIELD_LABELS[
+                    "facilities"
+                ],
             )
         ),
 
         "experience": experience,
 
         "gender": (
-            get_value_after_label(
+            get_value_after_labels(
                 lines,
-                "Gender",
+                FIELD_LABELS[
+                    "gender"
+                ],
+            )
+        ),
+
+        "education": (
+            get_value_after_labels(
+                lines,
+                FIELD_LABELS[
+                    "education"
+                ],
+            )
+        ),
+
+        "military_service": (
+            get_value_after_labels(
+                lines,
+                FIELD_LABELS[
+                    "military_service"
+                ],
             )
         ),
 
         "software": software,
 
-        "company_info": company_info,
+        "company_info": (
+            company_info
+        ),
 
         "key_requirements_raw": (
             key_requirements
@@ -325,10 +608,18 @@ async def parse_job(
         "job_description": (
             job_description
         ),
+
+        "job_requirements_raw": (
+            job_requirements_lines
+        ),
     }
 
     return job
 
+
+# --------------------------------------------------
+# Persistence
+# --------------------------------------------------
 
 def save_parsed_job(job):
     PARSED_DIR.mkdir(
@@ -363,6 +654,10 @@ def load_raw_jobs():
         return json.load(file)
 
 
+# --------------------------------------------------
+# Test runner
+# --------------------------------------------------
+
 async def main():
     raw_jobs = load_raw_jobs()
 
@@ -386,8 +681,8 @@ async def main():
 
             if raw_job is None:
                 print(
-                    f"\nJob not found "
-                    f"in raw_jobs.json: {job_id}"
+                    f"\nJob not found: "
+                    f"{job_id}"
                 )
                 continue
 
@@ -399,7 +694,9 @@ async def main():
                 )
 
                 output_path = (
-                    save_parsed_job(job)
+                    save_parsed_job(
+                        job
+                    )
                 )
 
                 print(
@@ -409,22 +706,39 @@ async def main():
                 )
 
                 print(
-                    f"  Experience: "
-                    f"{job['experience']}"
+                    "  Experience:",
+                    job["experience"],
                 )
 
                 print(
-                    f"  Software: "
-                    f"{len(job['software'])}"
+                    "  Software:",
+                    len(
+                        job["software"]
+                    ),
                 )
 
                 print(
-                    f"  Description chars: "
-                    f"{len(job['job_description'])}"
+                    "  Description chars:",
+                    len(
+                        job[
+                            "job_description"
+                        ]
+                    ),
                 )
 
                 print(
-                    f"  Saved: {output_path}"
+                    "  Education:",
+                    job["education"],
+                )
+
+                print(
+                    "  Gender:",
+                    job["gender"],
+                )
+
+                print(
+                    f"  Saved: "
+                    f"{output_path}"
                 )
 
             except Exception as error:
@@ -433,7 +747,8 @@ async def main():
                 )
 
                 print(
-                    f"  {type(error).__name__}: "
+                    f"  "
+                    f"{type(error).__name__}: "
                     f"{error}"
                 )
 
