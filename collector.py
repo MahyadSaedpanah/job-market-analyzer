@@ -445,9 +445,7 @@ def save_collection_state(
         )
 
 async def main():
-    jobs = await collect_multiple_queries(
-        test_limit=5
-    )
+    jobs = await collect_multiple_queries()
 
     save_jobs_to_json(jobs)
 
