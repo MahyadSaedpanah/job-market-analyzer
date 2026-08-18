@@ -116,8 +116,22 @@ async def collect_multiple_queries(test_limit=None):
     if test_limit is not None:
         queries = queries[:test_limit]
 
-    all_jobs = {}
+    all_jobs = load_jobs_from_json()
+
+    completed_queries = load_completed_queries(
+        all_jobs
+    )
+
     total_raw_results = 0
+
+    print(
+        f"\nLoaded {len(all_jobs)} existing jobs"
+    )
+
+    print(
+        f"Completed queries: "
+        f"{len(completed_queries)}"
+    )
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(
@@ -135,6 +149,12 @@ async def collect_multiple_queries(test_limit=None):
         for index, query in enumerate(queries, start=1):
             category = query["category"]
             keyword = query["keyword"]
+
+            if keyword in completed_queries:
+                print("\n" + "=" * 60)
+                print(f"SKIPPING COMPLETED QUERY: {keyword}")
+                print("=" * 60)
+                continue
 
             print("\n" + "=" * 60)
             print(
@@ -171,6 +191,20 @@ async def collect_multiple_queries(test_limit=None):
                     all_jobs[job_id]["matched_categories"].append(
                         category
                     )
+
+                completed_queries.add(keyword)
+
+                save_jobs_to_json(
+                    all_jobs
+                )
+
+                save_collection_state(
+                    completed_queries
+                )
+
+                print(
+                    f"Progress saved after: {keyword}"
+                )
 
             await page.wait_for_timeout(1500)
 
@@ -231,9 +265,79 @@ def save_jobs_to_json(
         f"to: {output_file}"
     )
 
+def load_jobs_from_json(
+    input_path="data/raw_jobs.json",
+):
+    input_file = Path(input_path)
+
+    if not input_file.exists():
+        return {}
+
+    with input_file.open(
+        "r",
+        encoding="utf-8",
+    ) as file:
+        return json.load(file)
+
+
+def load_completed_queries(
+    jobs,
+    state_path="data/collection_state.json",
+):
+    state_file = Path(state_path)
+
+    if state_file.exists():
+        with state_file.open(
+            "r",
+            encoding="utf-8",
+        ) as file:
+            state = json.load(file)
+
+        return set(
+            state.get("completed_queries", [])
+        )
+
+    completed_queries = set()
+
+    for job in jobs.values():
+        completed_queries.update(
+            job.get("matched_queries", [])
+        )
+
+    return completed_queries
+
+
+def save_collection_state(
+    completed_queries,
+    state_path="data/collection_state.json",
+):
+    state_file = Path(state_path)
+
+    state_file.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    state = {
+        "completed_queries": sorted(
+            completed_queries
+        )
+    }
+
+    with state_file.open(
+        "w",
+        encoding="utf-8",
+    ) as file:
+        json.dump(
+            state,
+            file,
+            ensure_ascii=False,
+            indent=2,
+        )
+
 async def main():
     jobs = await collect_multiple_queries(
-        test_limit=3
+        test_limit=5
     )
 
     save_jobs_to_json(jobs)
