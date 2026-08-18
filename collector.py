@@ -122,6 +122,10 @@ async def collect_multiple_queries(test_limit=None):
         all_jobs
     )
 
+    starting_job_count = len(all_jobs)
+
+    executed_queries = 0
+    skipped_queries = 0
     total_raw_results = 0
 
     print(
@@ -151,9 +155,14 @@ async def collect_multiple_queries(test_limit=None):
             keyword = query["keyword"]
 
             if keyword in completed_queries:
+                skipped_queries += 1
+
                 print("\n" + "=" * 60)
-                print(f"SKIPPING COMPLETED QUERY: {keyword}")
+                print(
+                    f"SKIPPING COMPLETED QUERY: {keyword}"
+                )
                 print("=" * 60)
+
                 continue
 
             print("\n" + "=" * 60)
@@ -168,7 +177,12 @@ async def collect_multiple_queries(test_limit=None):
                 keyword=keyword,
             )
 
+            executed_queries += 1
             total_raw_results += len(jobs)
+
+            # -------------------------------
+            # Merge all results of this query
+            # -------------------------------
 
             for job_id, url in jobs.items():
 
@@ -179,7 +193,10 @@ async def collect_multiple_queries(test_limit=None):
                         "matched_categories": [],
                     }
 
-                if keyword not in all_jobs[job_id]["matched_queries"]:
+                if (
+                    keyword
+                    not in all_jobs[job_id]["matched_queries"]
+                ):
                     all_jobs[job_id]["matched_queries"].append(
                         keyword
                     )
@@ -192,34 +209,63 @@ async def collect_multiple_queries(test_limit=None):
                         category
                     )
 
-                completed_queries.add(keyword)
+            # -------------------------------
+            # Save ONCE after the whole query
+            # -------------------------------
 
-                save_jobs_to_json(
-                    all_jobs
-                )
+            completed_queries.add(keyword)
 
-                save_collection_state(
-                    completed_queries
-                )
+            save_jobs_to_json(
+                all_jobs
+            )
 
-                print(
-                    f"Progress saved after: {keyword}"
-                )
+            save_collection_state(
+                completed_queries
+            )
+
+            print(
+                f"Progress saved after: {keyword}"
+            )
 
             await page.wait_for_timeout(1500)
 
         await browser.close()
 
-    duplicates = total_raw_results - len(all_jobs)
+    new_unique_jobs = (
+        len(all_jobs) - starting_job_count
+    )
 
     print("\n" + "=" * 60)
     print("COLLECTION SUMMARY")
     print("=" * 60)
 
-    print(f"Queries executed: {len(queries)}")
-    print(f"Raw results: {total_raw_results}")
-    print(f"Duplicates removed: {duplicates}")
-    print(f"Unique jobs: {len(all_jobs)}")
+    print(
+        f"Queries selected: {len(queries)}"
+    )
+
+    print(
+        f"Queries executed: {executed_queries}"
+    )
+
+    print(
+        f"Queries skipped: {skipped_queries}"
+    )
+
+    print(
+        f"Raw results this run: {total_raw_results}"
+    )
+
+    print(
+        f"Existing jobs before run: {starting_job_count}"
+    )
+
+    print(
+        f"New unique jobs this run: {new_unique_jobs}"
+    )
+
+    print(
+        f"Total unique jobs: {len(all_jobs)}"
+    )
 
     print("\nSAMPLE JOBS")
     print("-" * 60)
@@ -227,10 +273,12 @@ async def collect_multiple_queries(test_limit=None):
     for job_id, data in list(all_jobs.items())[:10]:
         print(f"\nJob ID: {job_id}")
         print(f"URL: {data['url']}")
+
         print(
             "Matched queries:",
             data["matched_queries"],
         )
+
         print(
             "Categories:",
             data["matched_categories"],
