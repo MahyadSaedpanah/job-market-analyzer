@@ -1,16 +1,121 @@
-import re
 import asyncio
+import re
 from urllib.parse import quote
 
 from playwright.async_api import async_playwright
 
+from config import SEARCH_QUERIES
 
-async def collect_job_links(
-    keyword="Data Scientist",
+
+JOB_PATTERN = re.compile(
+    r"^https://jobvision\.ir/jobs/(\d+)(?:/|$)"
+)
+
+
+async def extract_jobs_from_page(page):
+    links = await page.locator("a").evaluate_all(
+        """
+        elements => elements
+            .map(a => a.href)
+            .filter(Boolean)
+        """
+    )
+
+    jobs = {}
+
+    for url in links:
+        match = JOB_PATTERN.match(url)
+
+        if not match:
+            continue
+
+        job_id = match.group(1)
+
+        clean_url = (
+            url.split("?")[0]
+            .split("#")[0]
+        )
+
+        jobs[job_id] = clean_url
+
+    return jobs
+
+
+async def collect_single_query(
+    page,
+    keyword,
     max_scrolls=30,
     stable_rounds=3,
 ):
-    search_url = f"https://jobvision.ir/jobs/keyword/{quote(keyword)}"
+    search_url = (
+        f"https://jobvision.ir/jobs/keyword/{quote(keyword)}"
+    )
+
+    print(f"\nSearching: {keyword}")
+    print(f"URL: {search_url}")
+
+    await page.goto(
+        search_url,
+        wait_until="domcontentloaded",
+        timeout=60000,
+    )
+
+    await page.wait_for_timeout(4000)
+
+    jobs = {}
+    unchanged_count = 0
+
+    for scroll_number in range(1, max_scrolls + 1):
+        page_jobs = await extract_jobs_from_page(page)
+
+        previous_count = len(jobs)
+
+        jobs.update(page_jobs)
+
+        current_count = len(jobs)
+
+        if current_count == previous_count:
+            unchanged_count += 1
+        else:
+            unchanged_count = 0
+
+        if unchanged_count >= stable_rounds:
+            break
+
+        await page.evaluate(
+            "window.scrollTo(0, document.body.scrollHeight)"
+        )
+
+        await page.wait_for_timeout(1500)
+
+    print(f"Found: {len(jobs)} jobs")
+
+    return jobs
+
+
+def flatten_queries():
+    queries = []
+
+    for category, keywords in SEARCH_QUERIES.items():
+        for keyword in keywords:
+            queries.append(
+                {
+                    "category": category,
+                    "keyword": keyword,
+                }
+            )
+
+    return queries
+
+
+async def collect_multiple_queries(test_limit=None):
+    queries = flatten_queries()
+
+    if test_limit is not None:
+        queries = queries[:test_limit]
+
+    all_jobs = {}
+    total_raw_results = 0
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(
@@ -19,101 +124,89 @@ async def collect_job_links(
         )
 
         page = await browser.new_page(
-            viewport={"width": 1400, "height": 1000}
+            viewport={
+                "width": 1400,
+                "height": 1000,
+            }
         )
 
-        print(f"\nOpening: {search_url}")
+        for index, query in enumerate(queries, start=1):
+            category = query["category"]
+            keyword = query["keyword"]
 
-        await page.goto(
-            search_url,
-            wait_until="domcontentloaded",
-            timeout=60000,
-        )
-
-        await page.wait_for_timeout(5000)
-
-        pattern = re.compile(
-            r"^https://jobvision\.ir/jobs/(\d+)(?:/|$)"
-        )
-
-        jobs = {}
-        unchanged_count = 0
-
-        for scroll_number in range(1, max_scrolls + 1):
-
-            links = await page.locator("a").evaluate_all(
-                """
-                elements => elements
-                    .map(a => a.href)
-                    .filter(Boolean)
-                """
-            )
-
-            previous_count = len(jobs)
-
-            for url in links:
-                match = pattern.match(url)
-
-                if not match:
-                    continue
-
-                job_id = match.group(1)
-
-                clean_url = (
-                    url.split("?")[0]
-                    .split("#")[0]
-                )
-
-                jobs[job_id] = clean_url
-
-            current_count = len(jobs)
-
+            print("\n" + "=" * 60)
             print(
-                f"Scroll {scroll_number}: "
-                f"{current_count} unique jobs"
+                f"QUERY {index}/{len(queries)} "
+                f"[{category}]"
+            )
+            print("=" * 60)
+
+            jobs = await collect_single_query(
+                page=page,
+                keyword=keyword,
             )
 
-            if current_count == previous_count:
-                unchanged_count += 1
-            else:
-                unchanged_count = 0
+            total_raw_results += len(jobs)
 
-            if unchanged_count >= stable_rounds:
-                print(
-                    f"No new jobs found for "
-                    f"{stable_rounds} consecutive scrolls."
-                )
-                print("Stopping automatically.")
-                break
+            for job_id, url in jobs.items():
 
-            await page.evaluate(
-                "window.scrollTo(0, document.body.scrollHeight)"
-            )
+                if job_id not in all_jobs:
+                    all_jobs[job_id] = {
+                        "url": url,
+                        "matched_queries": [],
+                        "matched_categories": [],
+                    }
 
-            await page.wait_for_timeout(2000)
+                if keyword not in all_jobs[job_id]["matched_queries"]:
+                    all_jobs[job_id]["matched_queries"].append(
+                        keyword
+                    )
 
-        else:
-            print(
-                f"Reached maximum scroll limit: {max_scrolls}"
-            )
+                if (
+                    category
+                    not in all_jobs[job_id]["matched_categories"]
+                ):
+                    all_jobs[job_id]["matched_categories"].append(
+                        category
+                    )
+
+            await page.wait_for_timeout(1500)
 
         await browser.close()
 
-    return jobs
+    duplicates = total_raw_results - len(all_jobs)
+
+    print("\n" + "=" * 60)
+    print("COLLECTION SUMMARY")
+    print("=" * 60)
+
+    print(f"Queries executed: {len(queries)}")
+    print(f"Raw results: {total_raw_results}")
+    print(f"Duplicates removed: {duplicates}")
+    print(f"Unique jobs: {len(all_jobs)}")
+
+    print("\nSAMPLE JOBS")
+    print("-" * 60)
+
+    for job_id, data in list(all_jobs.items())[:10]:
+        print(f"\nJob ID: {job_id}")
+        print(f"URL: {data['url']}")
+        print(
+            "Matched queries:",
+            data["matched_queries"],
+        )
+        print(
+            "Categories:",
+            data["matched_categories"],
+        )
+
+    return all_jobs
 
 
 async def main():
-
-    jobs = await collect_job_links(
-        keyword="Data Scientist"
+    await collect_multiple_queries(
+        test_limit=3
     )
-
-    print("\n" + "=" * 60)
-    print(f"FOUND JOBS: {len(jobs)}")
-    print("=" * 60)
-
-    for job_id, url in jobs.items():
-        print(f"{job_id} -> {url}")
 
 
 if __name__ == "__main__":
