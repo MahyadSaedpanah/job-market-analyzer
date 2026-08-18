@@ -6,24 +6,17 @@ from pathlib import Path
 from playwright.async_api import async_playwright
 
 
-JOB_ID = "1481754"
-
-JOB_URL = (
-    "https://jobvision.ir/jobs/1481754/"
-    "%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-data-scientist"
-)
-
-OUTPUT_PATH = Path(
-    f"data/parsed/job_{JOB_ID}.json"
-)
+RAW_JOBS_PATH = Path("data/raw_jobs.json")
+PARSED_DIR = Path("data/parsed")
 
 
-SOFTWARE_LEVELS = {
-    "basic",
-    "intermediate",
-    "advanced",
-    "expert",
-}
+TEST_JOB_IDS = [
+    "1481754",  # Data Scientist
+    "1446383",  # Data Analyst
+    "1442050",  # Machine Learning Engineer
+    "1451105",  # کارشناس هوش مصنوعی
+    "1437674",  # Junior AI Engineer
+]
 
 
 def clean_lines(text):
@@ -66,17 +59,20 @@ def extract_section(
         start_label,
     )
 
+    if start_index is None:
+        return []
+
     end_index = find_index(
         lines,
         end_label,
     )
 
-    if start_index is None:
-        return []
-
     start_index += 1
 
-    if end_index is None:
+    if (
+        end_index is None
+        or end_index <= start_index
+    ):
         return lines[start_index:]
 
     return lines[
@@ -84,9 +80,7 @@ def extract_section(
     ]
 
 
-def extract_software_from_key_requirements(
-    lines,
-):
+def extract_software_from_key_requirements(lines):
     software = []
 
     pattern = re.compile(
@@ -101,45 +95,41 @@ def extract_software_from_key_requirements(
         if not match:
             continue
 
-        name = match.group(1).strip()
-        level = match.group(2).strip()
-
         software.append(
             {
-                "name": name,
-                "level": level,
+                "name": match.group(1).strip(),
+                "level": match.group(2).strip(),
             }
         )
 
     return software
 
 
-def extract_experience(
-    key_requirement_lines,
-):
-    for line in key_requirement_lines:
-        if "experience" in line.lower():
-            return line
+def extract_experience(lines):
+    keywords = [
+        "experience",
+        "سابقه",
+    ]
 
-        if "سابقه" in line:
+    for line in lines:
+        normalized = line.lower()
+
+        if any(
+            keyword in normalized
+            for keyword in keywords
+        ):
             return line
 
     return None
 
 
-def extract_top_metadata(lines, title):
-    """
-    Based on JobVision's current layout:
-
-    Title
-    Posted time
-    Company
-    Location
-    Employment type
-    """
-
+def extract_top_metadata(
+    lines,
+    title,
+):
     try:
         title_index = lines.index(title)
+
     except ValueError:
         return {
             "posted": None,
@@ -149,7 +139,8 @@ def extract_top_metadata(lines, title):
         }
 
     values = lines[
-        title_index + 1:title_index + 5
+        title_index + 1:
+        title_index + 5
     ]
 
     while len(values) < 4:
@@ -163,7 +154,218 @@ def extract_top_metadata(lines, title):
     }
 
 
-async def parse_job():
+async def get_job_title(page):
+    title_locator = page.locator(
+        "h1.yn_title"
+    )
+
+    if await title_locator.count() > 0:
+        return (
+            await title_locator
+            .first
+            .inner_text()
+        ).strip()
+
+    # fallback
+    h1 = page.locator("h1")
+
+    if await h1.count() > 0:
+        return (
+            await h1.first.inner_text()
+        ).strip()
+
+    return None
+
+
+async def parse_job(
+    page,
+    job_id,
+    url,
+):
+    print(
+        f"\nParsing job {job_id}..."
+    )
+
+    await page.goto(
+        url,
+        wait_until="domcontentloaded",
+        timeout=60000,
+    )
+
+    await page.wait_for_timeout(3000)
+
+    title = await get_job_title(page)
+
+    body_text = await page.locator(
+        "body"
+    ).inner_text()
+
+    lines = clean_lines(
+        body_text
+    )
+
+    top_metadata = extract_top_metadata(
+        lines,
+        title,
+    )
+
+    key_requirements = extract_section(
+        lines,
+        "key Requirements",
+        "Job Description",
+    )
+
+    software = (
+        extract_software_from_key_requirements(
+            key_requirements
+        )
+    )
+
+    experience = extract_experience(
+        key_requirements
+    )
+
+    job_description_lines = extract_section(
+        lines,
+        "Job Description",
+        "Job Requirements",
+    )
+
+    job_description = "\n".join(
+        job_description_lines
+    )
+
+    company_info = {
+        "size": get_value_after_label(
+            lines,
+            "Company Size",
+        ),
+        "industry": get_value_after_label(
+            lines,
+            "Industry",
+        ),
+        "type": get_value_after_label(
+            lines,
+            "Company Type",
+        ),
+        "establishment_year": (
+            get_value_after_label(
+                lines,
+                "Establishment year",
+            )
+        ),
+        "ownership_type": (
+            get_value_after_label(
+                lines,
+                "Ownership type",
+            )
+        ),
+    }
+
+    job = {
+        "job_id": job_id,
+        "url": page.url,
+
+        "title": title,
+
+        "company_name": (
+            top_metadata["company_name"]
+        ),
+
+        "location": (
+            top_metadata["location"]
+        ),
+
+        "employment_type": (
+            top_metadata["employment_type"]
+        ),
+
+        "posted": (
+            top_metadata["posted"]
+        ),
+
+        "working_days_and_hours": (
+            get_value_after_label(
+                lines,
+                "Working days and hours",
+            )
+        ),
+
+        "business_trips": (
+            get_value_after_label(
+                lines,
+                "Business trips",
+            )
+        ),
+
+        "facilities_and_benefits": (
+            get_value_after_label(
+                lines,
+                "Facilities and Benefits",
+            )
+        ),
+
+        "experience": experience,
+
+        "gender": (
+            get_value_after_label(
+                lines,
+                "Gender",
+            )
+        ),
+
+        "software": software,
+
+        "company_info": company_info,
+
+        "key_requirements_raw": (
+            key_requirements
+        ),
+
+        "job_description": (
+            job_description
+        ),
+    }
+
+    return job
+
+
+def save_parsed_job(job):
+    PARSED_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    output_path = (
+        PARSED_DIR
+        / f"job_{job['job_id']}.json"
+    )
+
+    with output_path.open(
+        "w",
+        encoding="utf-8",
+    ) as file:
+        json.dump(
+            job,
+            file,
+            ensure_ascii=False,
+            indent=2,
+        )
+
+    return output_path
+
+
+def load_raw_jobs():
+    with RAW_JOBS_PATH.open(
+        "r",
+        encoding="utf-8",
+    ) as file:
+        return json.load(file)
+
+
+async def main():
+    raw_jobs = load_raw_jobs()
+
     async with async_playwright() as p:
         browser = await p.chromium.launch(
             headless=True,
@@ -177,258 +379,69 @@ async def parse_job():
             }
         )
 
-        print(f"Opening job {JOB_ID}...")
-
-        await page.goto(
-            JOB_URL,
-            wait_until="domcontentloaded",
-            timeout=60000,
-        )
-
-        await page.wait_for_timeout(4000)
-
-        # ----------------------------------------
-        # Page title
-        # ----------------------------------------
-
-        title_locator = page.locator(
-            "h1.yn_title"
-        )
-
-        title = (
-            await title_locator
-            .first
-            .inner_text()
-        ).strip()
-
-        # ----------------------------------------
-        # Full visible text
-        # ----------------------------------------
-
-        body_text = await page.locator(
-            "body"
-        ).inner_text()
-
-        lines = clean_lines(
-            body_text
-        )
-
-        # ----------------------------------------
-        # Basic metadata
-        # ----------------------------------------
-
-        top_metadata = (
-            extract_top_metadata(
-                lines,
-                title,
+        for job_id in TEST_JOB_IDS:
+            raw_job = raw_jobs.get(
+                job_id
             )
-        )
 
-        # ----------------------------------------
-        # Key Requirements
-        # ----------------------------------------
-
-        key_requirements = extract_section(
-            lines,
-            "key Requirements",
-            "Job Description",
-        )
-
-        experience = extract_experience(
-            key_requirements
-        )
-
-        software = (
-            extract_software_from_key_requirements(
-                key_requirements
-            )
-        )
-
-        # ----------------------------------------
-        # Job Description
-        # ----------------------------------------
-
-        job_description_lines = (
-            extract_section(
-                lines,
-                "Job Description",
-                "Job Requirements",
-            )
-        )
-
-        job_description = "\n".join(
-            job_description_lines
-        )
-
-        # ----------------------------------------
-        # Company information
-        # ----------------------------------------
-
-        company_info = {
-            "size": get_value_after_label(
-                lines,
-                "Company Size",
-            ),
-            "industry": get_value_after_label(
-                lines,
-                "Industry",
-            ),
-            "type": get_value_after_label(
-                lines,
-                "Company Type",
-            ),
-            "establishment_year": (
-                get_value_after_label(
-                    lines,
-                    "Establishment year",
+            if raw_job is None:
+                print(
+                    f"\nJob not found "
+                    f"in raw_jobs.json: {job_id}"
                 )
-            ),
-            "ownership_type": (
-                get_value_after_label(
-                    lines,
-                    "Ownership type",
+                continue
+
+            try:
+                job = await parse_job(
+                    page=page,
+                    job_id=job_id,
+                    url=raw_job["url"],
                 )
-            ),
-        }
 
-        # ----------------------------------------
-        # Other job metadata
-        # ----------------------------------------
+                output_path = (
+                    save_parsed_job(job)
+                )
 
-        working_days = (
-            get_value_after_label(
-                lines,
-                "Working days and hours",
-            )
-        )
+                print(
+                    f"✓ {job_id}"
+                    f" | {job['title']}"
+                    f" | {job['company_name']}"
+                )
 
-        business_trips = (
-            get_value_after_label(
-                lines,
-                "Business trips",
-            )
-        )
+                print(
+                    f"  Experience: "
+                    f"{job['experience']}"
+                )
 
-        facilities = (
-            get_value_after_label(
-                lines,
-                "Facilities and Benefits",
-            )
-        )
+                print(
+                    f"  Software: "
+                    f"{len(job['software'])}"
+                )
 
-        gender = get_value_after_label(
-            lines,
-            "Gender",
-        )
+                print(
+                    f"  Description chars: "
+                    f"{len(job['job_description'])}"
+                )
 
-        # ----------------------------------------
-        # Final structured object
-        # ----------------------------------------
+                print(
+                    f"  Saved: {output_path}"
+                )
 
-        job = {
-            "job_id": JOB_ID,
-            "url": page.url,
+            except Exception as error:
+                print(
+                    f"✗ Failed: {job_id}"
+                )
 
-            "title": title,
+                print(
+                    f"  {type(error).__name__}: "
+                    f"{error}"
+                )
 
-            "company_name": (
-                top_metadata[
-                    "company_name"
-                ]
-            ),
-
-            "location": (
-                top_metadata[
-                    "location"
-                ]
-            ),
-
-            "employment_type": (
-                top_metadata[
-                    "employment_type"
-                ]
-            ),
-
-            "posted": (
-                top_metadata[
-                    "posted"
-                ]
-            ),
-
-            "working_days_and_hours": (
-                working_days
-            ),
-
-            "business_trips": (
-                business_trips
-            ),
-
-            "facilities_and_benefits": (
-                facilities
-            ),
-
-            "experience": experience,
-
-            "gender": gender,
-
-            "software": software,
-
-            "company_info": company_info,
-
-            "key_requirements_raw": (
-                key_requirements
-            ),
-
-            "job_description": (
-                job_description
-            ),
-        }
-
-        # ----------------------------------------
-        # Save
-        # ----------------------------------------
-
-        OUTPUT_PATH.parent.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
-
-        with OUTPUT_PATH.open(
-            "w",
-            encoding="utf-8",
-        ) as file:
-            json.dump(
-                job,
-                file,
-                ensure_ascii=False,
-                indent=2,
+            await page.wait_for_timeout(
+                1500
             )
 
         await browser.close()
-
-        return job
-
-
-async def main():
-    job = await parse_job()
-
-    print("\n" + "=" * 70)
-    print("PARSED JOB")
-    print("=" * 70)
-
-    print(
-        json.dumps(
-            job,
-            ensure_ascii=False,
-            indent=2,
-        )
-    )
-
-    print("\n" + "=" * 70)
-
-    print(
-        f"Saved to: {OUTPUT_PATH}"
-    )
 
 
 if __name__ == "__main__":
