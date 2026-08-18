@@ -1,6 +1,8 @@
 import asyncio
 import re
 from urllib.parse import quote
+import json
+from pathlib import Path    
 
 from playwright.async_api import async_playwright
 
@@ -202,11 +204,39 @@ async def collect_multiple_queries(test_limit=None):
 
     return all_jobs
 
+def save_jobs_to_json(
+    jobs,
+    output_path="data/raw_jobs.json",
+):
+    output_file = Path(output_path)
+
+    output_file.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    with output_file.open(
+        "w",
+        encoding="utf-8",
+    ) as file:
+        json.dump(
+            jobs,
+            file,
+            ensure_ascii=False,
+            indent=2,
+        )
+
+    print(
+        f"\nSaved {len(jobs)} unique jobs "
+        f"to: {output_file}"
+    )
 
 async def main():
-    await collect_multiple_queries(
+    jobs = await collect_multiple_queries(
         test_limit=3
     )
+
+    save_jobs_to_json(jobs)
 
 
 if __name__ == "__main__":
