@@ -588,96 +588,36 @@ Example:
 A Data Scientist working for a bank does not automatically require
 "Banking" domain knowledge unless the advertisement indicates it.
 
-RESPONSIBILITIES
-================
+RESPONSIBILITIES EXTRACTION RULES
 
-Extract actual expected job duties.
+Extract all actual job tasks and responsibilities.
 
-If the advertisement contains an explicit responsibilities section,
-or clearly describes actions the employee is expected to perform,
-responsibilities MUST NOT be empty.
+Responsibilities can appear in:
+- Responsibilities
+- Duties
+- Tasks
+- What you will do
+- شرح وظایف
+- وظایف
+- مسئولیت‌ها
+- فعالیت‌ها
 
-Examples of responsibility verbs:
-- design
-- develop
-- build
-- analyze
-- explore
-- deploy
-- monitor
-- improve
-- evaluate
-- create
-- maintain
-- report
-- collaborate
-- document
+Rules:
+- Extract from both Persian and English text.
+- Do not require bullet points.
+- Paragraph sentences describing work activities are valid.
+- Include technical and non-technical tasks.
+- Do not return an empty list if the job description contains actions performed by the employee.
 
-Do not turn qualifications into responsibilities.
-
-Example:
-
-"Experience with Python"
-is NOT a responsibility.
-
-"Build machine learning models"
-IS a responsibility.
-
-"Deploy and monitor machine learning models in production"
-IS a responsibility.
-
-"Explore large datasets to generate insights"
-IS a responsibility.
-
-When multiple distinct responsibilities are explicitly present,
-extract each meaningful responsibility separately.
-
-Use the closest matching category:
-- data_analysis
-- model_development
-- experimentation
-- deployment
-- monitoring
-- data_pipeline
-- reporting
-- stakeholder_communication
-- research
-- software_engineering
-- documentation
-- other
-
-Use:
-
-software_engineering
-for responsibilities such as:
-- writing clean or maintainable code
-- testing software
-- code quality
-- implementing production-quality software
-
-documentation
-for responsibilities such as:
-- documenting models
-- documenting experiments
-- writing technical documentation
-- documenting assumptions or results
-
-monitoring
-for responsibilities primarily focused on:
-- monitoring model performance
-- production monitoring
-- detecting degradation
-- continuously observing deployed models
-
-Do not classify software engineering work as research.
-
-Do not classify documentation work as stakeholder communication
-unless the responsibility is explicitly about communicating with
-stakeholders.
-
-Before returning the final JSON, re-read the job description.
-If explicit duties exist but responsibilities is empty,
-the extraction is incomplete and must be corrected.
+Examples of valid responsibilities:
+- Build machine learning models
+- Analyze datasets
+- Design prompts for AI models
+- Evaluate model performance
+- Train users on AI tools
+- تهیه گزارش تحلیلی
+- طراحی داشبورد
+- آموزش کارکنان
 
 ENGINEERING EXPECTATIONS
 ========================
