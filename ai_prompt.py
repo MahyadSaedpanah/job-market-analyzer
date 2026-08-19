@@ -309,6 +309,77 @@ For example:
 - SQL and SQL Server remain distinct when SQL Server itself is explicitly required.
 - Machine Learning and Scikit-learn are different concepts.
 
+SKILL CATEGORY MAPPING
+======================
+
+Use these category mappings consistently when the named skill is explicit:
+
+Python, R, Java, C++, JavaScript
+=> programming_language
+
+SQL
+=> query_language
+
+SQL Server, PostgreSQL, MySQL, MongoDB, Redis
+=> database
+
+Pandas, NumPy
+=> data_library
+
+Scikit-learn, XGBoost, LightGBM, CatBoost,
+PyTorch, TensorFlow, Keras
+=> ml_framework
+
+Statistics, Probability
+=> statistics
+
+A/B Testing, hypothesis testing, experimentation
+=> experimentation
+
+Time Series Forecasting, Forecasting
+=> time_series
+
+NLP, Natural Language Processing
+=> nlp
+
+Computer Vision, Image Processing
+=> computer_vision
+
+Recommendation Systems
+=> recommendation_system
+
+Power BI, Tableau
+=> bi_tool
+
+Docker
+=> containerization
+
+Kubernetes
+=> orchestration
+
+Git
+=> version_control
+
+CI/CD
+=> ci_cd
+
+MLOps
+=> mlops
+
+Do not use broad categories such as "machine_learning"
+when a more specific category above applies.
+
+For example:
+
+Pandas
+must NOT be categorized as data_analysis.
+
+Scikit-learn
+must NOT be categorized as machine_learning.
+
+Time Series Forecasting
+must NOT be categorized as machine_learning.
+
 REQUIREMENT LEVEL
 =================
 
@@ -397,27 +468,77 @@ because the structured field gives an explicit level.
 SOURCE PRIORITY
 ===============
 
-Use all supplied information, but apply these rules:
+Use structured fields and free text together.
 
-1. Explicit structured fields are authoritative for:
-   - software proficiency
-   - listed experience
-   - education fields
-   - gender
-   - other structured requirements
+Structured software entries and free-text mentions are separate evidence.
 
-2. Free-text Job Description is authoritative for:
+Example:
+
+Structured software:
+SQL Server - Intermediate
+
+Free text:
+Experience with SQL
+
+These MUST produce two distinct skills:
+
+1.
+canonical_name = "SQL Server"
+category = database
+proficiency = intermediate
+
+2.
+canonical_name = "SQL"
+category = query_language
+proficiency = unspecified
+
+Never transfer the proficiency of one technology to another
+related technology.
+
+For example:
+
+SQL Server - Intermediate
+
+does NOT imply:
+
+SQL - Intermediate
+
+Similarly:
+
+Python - Intermediate
+
+plus:
+
+Strong Python programming skills
+
+should produce one Python skill with:
+proficiency = intermediate
+
+because both refer to the same canonical skill and the structured
+field gives the explicit proficiency.
+
+Rules:
+
+1. Explicit structured software fields are authoritative for
+   proficiency.
+
+2. Free text may add:
+   - additional technologies
    - responsibilities
-   - technologies not present in structured fields
    - conceptual skills
-   - preferred/nice-to-have distinctions
-   - production/engineering expectations
-   - domain knowledge
+   - preferred or nice-to-have skills
+   - engineering expectations
 
-3. If two sources conflict:
-   - preserve explicit structured proficiency
-   - prefer the clearest explicit numeric experience requirement
-   - never silently invent a compromise
+3. Merge structured and free-text references only when they clearly
+   refer to the SAME canonical skill.
+
+4. Never merge related but distinct technologies.
+
+Examples:
+- SQL != SQL Server
+- Python != Pandas
+- Docker != Kubernetes
+- Machine Learning != Scikit-learn
 
 SOFT SKILLS
 ===========
@@ -464,6 +585,26 @@ RESPONSIBILITIES
 
 Extract actual expected job duties.
 
+If the advertisement contains an explicit responsibilities section,
+or clearly describes actions the employee is expected to perform,
+responsibilities MUST NOT be empty.
+
+Examples of responsibility verbs:
+- design
+- develop
+- build
+- analyze
+- explore
+- deploy
+- monitor
+- improve
+- evaluate
+- create
+- maintain
+- report
+- collaborate
+- document
+
 Do not turn qualifications into responsibilities.
 
 Example:
@@ -471,31 +612,116 @@ Example:
 "Experience with Python"
 is NOT a responsibility.
 
-"Build forecasting models"
+"Build machine learning models"
 IS a responsibility.
 
-Keep responsibility text concise and faithful to the advertisement.
+"Deploy and monitor machine learning models in production"
+IS a responsibility.
+
+"Explore large datasets to generate insights"
+IS a responsibility.
+
+When multiple distinct responsibilities are explicitly present,
+extract each meaningful responsibility separately.
+
+Use the closest matching category:
+- data_analysis
+- model_development
+- experimentation
+- deployment
+- monitoring
+- data_pipeline
+- reporting
+- stakeholder_communication
+- research
+- other
+
+Before returning the final JSON, re-read the job description.
+If explicit duties exist but responsibilities is empty,
+the extraction is incomplete and must be corrected.
 
 ENGINEERING EXPECTATIONS
 ========================
 
-Extract these summaries only when supported:
+Extract engineering expectations whenever they are explicitly supported.
 
+Mappings:
+
+deploy models into production
+production ML systems
+production-ready ML solutions
+=> production_deployment
+
+serve models
+inference service
+model endpoint
+=> model_serving
+
+monitor models
+monitor model performance
+production monitoring
+=> monitoring
+
+build APIs
+FastAPI
+Flask API
+REST API development
+=> api_development
+
+Docker
+=> docker
+
+Kubernetes
+=> kubernetes
+
+AWS, Azure, GCP, cloud platform
+=> cloud
+
+CI/CD
+continuous integration
+continuous deployment
+=> ci_cd
+
+unit tests
+integration tests
+well-tested code
+testing practices
+=> testing
+
+clean code
+maintainable code
+software quality
+=> clean_code
+
+Git
+version control
+=> git
+
+These may duplicate information present in the skills list.
+That duplication is intentional.
+
+If the advertisement explicitly mentions production deployment,
+monitoring, clean/tested code, Git, APIs, Docker, Kubernetes,
+cloud, or CI/CD, engineering_expectations MUST NOT be empty.
+
+Example:
+
+"Deploy and monitor machine learning models in production."
+
+should usually produce BOTH:
 - production_deployment
-- model_serving
 - monitoring
-- api_development
-- docker
-- kubernetes
-- cloud
-- ci_cd
-- testing
-- clean_code
-- git
 
-These may overlap with entries in the skills list.
-That duplication is intentional because this section is a summary
-of engineering expectations.
+Example:
+
+"Write clean, maintainable, and well-tested Python code."
+
+should usually produce:
+- clean_code
+- testing
+
+Before returning the final JSON, verify that explicit engineering
+expectations from the advertisement were not omitted.
 
 EVIDENCE
 ========
@@ -542,6 +768,12 @@ Before returning the JSON:
 - verify that proficiency is not guessed
 - verify that irrelevant AI mentions did not distort classification
 - verify that the result follows the provided schema exactly
+- if explicit responsibilities exist, responsibilities must not be empty
+- if explicit production/software-engineering expectations exist,
+  engineering_expectations must not be empty
+- preserve distinct skills such as SQL and SQL Server separately
+- do not transfer proficiency between related but different skills
+- use the most specific skill category available
 """
 
 
