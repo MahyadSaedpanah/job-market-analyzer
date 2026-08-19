@@ -619,6 +619,25 @@ Examples of valid responsibilities:
 - طراحی داشبورد
 - آموزش کارکنان
 
+Important distinction:
+
+A skill and a responsibility can overlap.
+
+If a sentence describes an activity performed by the employee,
+extract it as a responsibility even if the same concept is also listed as a skill.
+
+Examples:
+"Design prompts for LLM applications"
+=> responsibility
+
+"Evaluate AI models using benchmark datasets"
+=> responsibility
+
+"Develop legal AI workflows"
+=> responsibility
+
+Do not convert all technical actions into skills only.
+
 ENGINEERING EXPECTATIONS
 ========================
 
