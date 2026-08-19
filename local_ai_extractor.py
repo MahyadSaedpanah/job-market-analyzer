@@ -143,6 +143,24 @@ def extract_job(job):
     return response
 
 
+def fix_role_grouping(data):
+    role = (
+        data
+        .get("role_classification", {})
+        .get("primary_role")
+    )
+
+    if role in [
+        "bi_analyst",
+        "business_analyst",
+        "llm_engineer",
+        "ai_specialist",
+    ]:
+        data["role_classification"]["target_group"] = "adjacent"
+
+    return data
+
+
 def main():
     job = load_benchmark_job(
         JOB_ID
@@ -177,12 +195,11 @@ def main():
     )
 
     try:
-        analysis = (
-            AIJobAnalysis
-            .model_validate_json(
-                raw_content
-            )
-        )
+        data = json.loads(raw_content)
+
+        data = fix_role_grouping(data)
+
+        analysis = AIJobAnalysis.model_validate(data)
 
     except ValidationError as error:
         print("\n" + "=" * 70)
