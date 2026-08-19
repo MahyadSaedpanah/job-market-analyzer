@@ -402,6 +402,22 @@ def main():
             f"{title}"
         )
 
+    print("\nVERY LONG DESCRIPTION JOBS")
+    print("-" * 70)
+
+    for (
+        job_id,
+        title,
+        length,
+    ) in suspicious_long_descriptions[:20]:
+        print(
+            f"{job_id} | "
+            f"{length} chars | "
+            f"{title}"
+        )
+
+    
+
 
 if __name__ == "__main__":
     main()
