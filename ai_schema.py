@@ -282,6 +282,10 @@ class ResponsibilityCategory(str, Enum):
         "stakeholder_communication"
     )
     RESEARCH = "research"
+
+    SOFTWARE_ENGINEERING = "software_engineering"
+    DOCUMENTATION = "documentation"
+    
     OTHER = "other"
 
 

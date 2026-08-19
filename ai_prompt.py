@@ -634,7 +634,38 @@ Use the closest matching category:
 - reporting
 - stakeholder_communication
 - research
+- software_engineering
+- documentation
 - other
+
+Use:
+
+software_engineering
+for responsibilities such as:
+- writing clean or maintainable code
+- testing software
+- code quality
+- implementing production-quality software
+
+documentation
+for responsibilities such as:
+- documenting models
+- documenting experiments
+- writing technical documentation
+- documenting assumptions or results
+
+monitoring
+for responsibilities primarily focused on:
+- monitoring model performance
+- production monitoring
+- detecting degradation
+- continuously observing deployed models
+
+Do not classify software engineering work as research.
+
+Do not classify documentation work as stakeholder communication
+unless the responsibility is explicitly about communicating with
+stakeholders.
 
 Before returning the final JSON, re-read the job description.
 If explicit duties exist but responsibilities is empty,
