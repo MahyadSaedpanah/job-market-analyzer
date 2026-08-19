@@ -1,0 +1,61 @@
+{
+  "job_id": "1481754",
+  "url": "https://jobvision.ir/jobs/1481754/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-data-scientist",
+  "title": "Data Scientist",
+  "company_name": "Digipay",
+  "location": "Tehran/Vanak",
+  "employment_type": "Full Time",
+  "posted": "(8 days ago)",
+  "working_days_and_hours": "شنبه تا چهارشنبه",
+  "business_trips": "-",
+  "facilities_and_benefits": "-",
+  "experience": "3 years experience in similar position",
+  "gender": "Men / Women",
+  "education": null,
+  "military_service": null,
+  "software": [
+    {
+      "name": "Sql Server",
+      "level": "Intermediate",
+      "raw_level": "Intermediate"
+    },
+    {
+      "name": "Python",
+      "level": "Intermediate",
+      "raw_level": "Intermediate"
+    },
+    {
+      "name": "GIT",
+      "level": "Basic",
+      "raw_level": "Basic"
+    }
+  ],
+  "company_info": {
+    "size": "201 - 500 employees",
+    "industry": "Finance / Investment",
+    "type": "Iranian company dealing only with Iranian entities",
+    "establishment_year": "1397",
+    "ownership_type": "Privately held"
+  },
+  "key_requirements_raw": [
+    "3 years experience in similar position",
+    "Sql Server - Intermediate",
+    "Python - Intermediate",
+    "GIT - Basic"
+  ],
+  "job_description": "About the Role:\nWe are looking for a Data Scientist to join our AI team and help build intelligent products that directly impact millions of users and internal operations.\nYou will work on machine learning systems ranging from recommendation systems and marketing intelligence to forecasting and AI-powered decision engines. You'll collaborate closely with AI Engineers and business stakeholders to turn business problems into production-ready ML solutions.\nThis role is highly practical. We value people who can move from problem definition to deployment, monitor model performance, and continuously improve production systems.\nResponsibilities:\n- Design and develop machine learning models for real-world business problems.\n- Explore large datasets to discover patterns and generate actionable insights.\n- Build features and data pipelines for production ML systems.\n- Design experiments and evaluate model performance using appropriate metrics.\n- Deploy and monitor machine learning models in production.\n- Improve existing models through continuous experimentation and monitoring.\n- Write clean, maintainable, and well-tested Python code.\n- Document models, assumptions, and experiment results.\nRequired Qualifications:\n- 3+ years of experience as a Data Scientist or Machine Learning Engineer.\n- Strong Python programming skills.\n- Excellent knowledge of machine learning algorithms including tree-based models (XGBoost, LightGBM, CatBoost), clustering, time-series forecasting, and recommendation systems.\n- Strong understanding of statistics and probability.\n- Experience with SQL and large-scale data analysis.\n- Experience using Pandas, NumPy, and Scikit-learn.\n- Experience deploying models into production.\n- Familiarity with Git and collaborative software development.\n- Strong communication skills and ability to explain technical concepts to non-technical stakeholders.",
+  "job_requirements_raw": [
+    "Gender",
+    "Men / Women",
+    "Software",
+    "Python",
+    "|",
+    "Intermediate",
+    "Sql Server",
+    "|",
+    "Intermediate",
+    "GIT",
+    "|",
+    "Basic"
+  ]
+}

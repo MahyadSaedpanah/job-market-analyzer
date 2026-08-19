@@ -1,0 +1,48 @@
+{
+  "job_id": "1442050",
+  "url": "https://jobvision.ir/jobs/1442050/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-machine-learning-engineer",
+  "title": "Machine Learning Engineer",
+  "company_name": "Didar org",
+  "location": "Tehran/Shahrak Gharb",
+  "employment_type": "Part Time",
+  "posted": "(22 days ago)",
+  "working_days_and_hours": "Saturday to Wednesday",
+  "business_trips": "-",
+  "facilities_and_benefits": "-",
+  "experience": "1 years experience in similar position",
+  "gender": "Men / Women",
+  "education": "Bachelor",
+  "military_service": null,
+  "software": [
+    {
+      "name": "Python",
+      "level": "Intermediate",
+      "raw_level": "Intermediate"
+    }
+  ],
+  "company_info": {
+    "size": "51 - 200 employees",
+    "industry": "IT / Software / Hardware",
+    "type": "Iranian company dealing only with Iranian entities",
+    "establishment_year": "1398",
+    "ownership_type": "Privately held"
+  },
+  "key_requirements_raw": [
+    "1 years experience in similar position",
+    "Bachelor Computer and IT",
+    "Python - Intermediate"
+  ],
+  "job_description": "About Didar\nDidar is a cloud-based B2B CRM that helps businesses streamline sales processes and customer relationship management through data-driven solutions.\nWe are currently looking for a Junior Machine Learning Engineer to help develop intelligent product features through data analysis and modeling. If you are passionate about problem-solving, data analysis, and identifying relationships between different data points, this role is a great fit for you.\nResponsibilities\nDevelop and improve predictive models.\nIdentify user behavior patterns.\nOptimize organizational processes using data.\nContinuously evaluate and improve model performance.\nRequired Skills and Qualifications\nStrong understanding of machine learning concepts and algorithms.\nExperience working with complex datasets and proficiency in Python.\nAbility to analyze data and identify patterns and trends.\nAbility to predict user behavior and needs based on data.\nSkills in optimizing models and algorithms.\nAbility to analyze organizational processes and identify strengths and weaknesses.\nStrong teamwork and effective communication skills.",
+  "job_requirements_raw": [
+    "Gender",
+    "Men / Women",
+    "Education",
+    "Bachelor",
+    "|",
+    "Computer and IT",
+    "Software",
+    "Python",
+    "|",
+    "Intermediate"
+  ]
+}

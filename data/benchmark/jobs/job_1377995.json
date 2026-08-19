@@ -1,0 +1,79 @@
+{
+  "job_id": "1377995",
+  "url": "https://jobvision.ir/jobs/1377995/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-senior-data-scientist",
+  "title": "Senior Data Scientist",
+  "company_name": "Azki",
+  "location": "4.2",
+  "employment_type": "Tehran/Saei-Tavanir",
+  "posted": "(46 days ago)",
+  "working_days_and_hours": "Saturday to Wednesday",
+  "business_trips": "-",
+  "facilities_and_benefits": "Loan -",
+  "experience": "4 years experience in similar position",
+  "gender": "Men / Women",
+  "education": null,
+  "military_service": null,
+  "software": [
+    {
+      "name": "MySql",
+      "level": "Intermediate",
+      "raw_level": "Intermediate"
+    },
+    {
+      "name": "Python",
+      "level": "Intermediate",
+      "raw_level": "Intermediate"
+    },
+    {
+      "name": "GIT",
+      "level": "Intermediate",
+      "raw_level": "Intermediate"
+    },
+    {
+      "name": "Docker",
+      "level": "Intermediate",
+      "raw_level": "Intermediate"
+    },
+    {
+      "name": "Kubernetes",
+      "level": "Intermediate",
+      "raw_level": "Intermediate"
+    }
+  ],
+  "company_info": {
+    "size": "1001 - 5000 employees",
+    "industry": "Internet Provider / E-commerce / Online Services",
+    "type": "Iranian company dealing only with Iranian entities",
+    "establishment_year": "1395",
+    "ownership_type": "Privately held"
+  },
+  "key_requirements_raw": [
+    "4 years experience in similar position",
+    "MySql - Intermediate",
+    "Python - Intermediate",
+    "GIT - Intermediate",
+    "Docker - Intermediate",
+    "Kubernetes - Intermediate"
+  ],
+  "job_description": "At Azki’s Data Team, we are looking for a Senior Data Scientist — a responsible and skilled problem-solver who can turn complex data into AI-powered solutions and data-driven products.\nResponsibilities\nCollaborate closely with cross-functional teams (data, product, engineering, and business stakeholders) to design and deliver data science and AI projects.\nBuild reliable end-to-end data science and machine learning pipelines with automated deployment, real-time monitoring, and robust evaluation metrics.\nDesign and run experiments (A/B tests) to measure the impact of models, product changes, and business initiatives.\nDesign and optimize RAG pipelines, embeddings, and vector search systems to enable efficient knowledge retrieval across structured and unstructured data.\nDesign, build, and maintain LLM-powered agents and workflows with tool integration, memory, and API calls to solve real problems in Azki’s product domain.\nRequired Skills\nAt least 4 years of experience in Data Science, Machine Learning, or related fields.\nProficiency in Python, with the ability to write clean, modular, maintainable, production-ready code.\nSolid knowledge of Machine Learning and Deep Learning methods.\nHands-on experience with LLM applications and agent orchestration tools such as LangGraph.\nExperience deploying models at production scale using Git, Docker, Airflow, Kubernetes.\nStrong SQL skills and familiarity with databases such as MySQL and ClickHouse, along with analytics tools like Metabase and Trino.\nPreferred/Optional Skills\nExperience with real-time voice processing, including speech recognition, transcription, or audio feature extraction for ML applications.\nFamiliarity with Vision-Language Models, including multimodal tasks such as image captioning, visual question answering, or integrating visual understanding into LLM applications.\nExperience in mentoring and supporting team members in their career growth, including close collaboration and pair work to improve project outcomes.",
+  "job_requirements_raw": [
+    "Gender",
+    "Men / Women",
+    "Software",
+    "Python",
+    "|",
+    "Intermediate",
+    "GIT",
+    "|",
+    "Intermediate",
+    "Docker",
+    "|",
+    "Intermediate",
+    "Kubernetes",
+    "|",
+    "Intermediate",
+    "MySql",
+    "|",
+    "Intermediate"
+  ]
+}

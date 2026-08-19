@@ -1,0 +1,61 @@
+{
+  "job_id": "1446383",
+  "url": "https://jobvision.ir/jobs/1446383/%D8%A7%D8%B3%D8%AA%D8%AE%D8%AF%D8%A7%D9%85-data-analyst",
+  "title": "Data Analyst",
+  "company_name": "Didar org",
+  "location": "Tehran/Shahrak Gharb",
+  "employment_type": "Full Time",
+  "posted": "(16 days ago)",
+  "working_days_and_hours": "Saturday to Wednesday",
+  "business_trips": "-",
+  "facilities_and_benefits": "-",
+  "experience": "2 years experience in similar position",
+  "gender": "Men / Women",
+  "education": null,
+  "military_service": null,
+  "software": [
+    {
+      "name": "Microsoft Excel",
+      "level": "Basic",
+      "raw_level": "Basic"
+    },
+    {
+      "name": "Sql Server",
+      "level": "Basic",
+      "raw_level": "Basic"
+    },
+    {
+      "name": "PowerBI",
+      "level": "Basic",
+      "raw_level": "Basic"
+    }
+  ],
+  "company_info": {
+    "size": "51 - 200 employees",
+    "industry": "IT / Software / Hardware",
+    "type": "Iranian company dealing only with Iranian entities",
+    "establishment_year": "1398",
+    "ownership_type": "Privately held"
+  },
+  "key_requirements_raw": [
+    "2 years experience in similar position",
+    "Microsoft Excel - Basic",
+    "Sql Server - Basic",
+    "PowerBI - Basic"
+  ],
+  "job_description": "Didar is a cloud-based B2B CRM that helps businesses streamline sales processes and customer relationship management through data-driven solutions.\nJob Description\nWe are currently looking for a Junior Data Analyst to help monitor business performance through data analysis, KPI tracking, and dashboard development. If you're passionate about working with data, providing meaningful insights, and enabling data-driven decision-making, we'd love to hear from you.\nResponsibilities\nAnalyze and monitor KPIs across different teams.\nContinuously analyze performance dashboards.\nTrain new employees on dashboard usage and prepare training documentation and processes.\nDesign dashboard templates.\nPrepare reports from databases as needed.\nRequired Skills & Experience\nAbility to analyze business and performance data (Sales, Marketing, Support, etc.).\nAbility to analyze key performance indicators (KPIs).\nAbility to create documentation and training processes for internal teams.\nBasic familiarity with dashboarding tools (Excel, Power BI).\nFamiliarity with SQL.\nStrong communication skills and the ability to present analytical reports to different teams.",
+  "job_requirements_raw": [
+    "Gender",
+    "Men / Women",
+    "Software",
+    "Microsoft Excel",
+    "|",
+    "Basic",
+    "PowerBI",
+    "|",
+    "Basic",
+    "Sql Server",
+    "|",
+    "Basic"
+  ]
+}

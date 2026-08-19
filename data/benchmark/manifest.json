@@ -1,0 +1,72 @@
+[
+  {
+    "job_id": "1481754",
+    "title": "Data Scientist",
+    "company_name": "Digipay",
+    "case": "clear_core",
+    "note": "Clear Data Scientist role"
+  },
+  {
+    "job_id": "1446383",
+    "title": "Data Analyst",
+    "company_name": "Didar org",
+    "case": "clear_core",
+    "note": "Clear Data Analyst role"
+  },
+  {
+    "job_id": "1442050",
+    "title": "Machine Learning Engineer",
+    "company_name": "Didar org",
+    "case": "clear_core",
+    "note": "Clear Machine Learning Engineer role"
+  },
+  {
+    "job_id": "1437674",
+    "title": "Junior AI Engineer",
+    "company_name": "moaseseh NAJM",
+    "case": "clear_core",
+    "note": "Junior AI Engineer role"
+  },
+  {
+    "job_id": "1377995",
+    "title": "Senior Data Scientist",
+    "company_name": "Azki",
+    "case": "clear_core",
+    "note": "Senior Data Scientist role"
+  },
+  {
+    "job_id": "1451105",
+    "title": "کارشناس هوش مصنوعی",
+    "company_name": "گروه صنعتی سپهر",
+    "case": "persian_core",
+    "note": "Persian AI Specialist advertisement"
+  },
+  {
+    "job_id": "1483896",
+    "title": "تحلیل گر داده",
+    "company_name": "نامیرا همراه پارس",
+    "case": "persian_core",
+    "note": "Persian Data Analyst advertisement"
+  },
+  {
+    "job_id": "1474897",
+    "title": "Junior Business Analyst",
+    "company_name": "snappfood",
+    "case": "borderline",
+    "note": "Business Analyst role that may or may not belong to the target Data Analyst market"
+  },
+  {
+    "job_id": "1457574",
+    "title": "تولیدکننده محتوا (هوش مصنوعی)",
+    "company_name": "موسسه خدمات فرهنگی کاوش",
+    "case": "irrelevant",
+    "note": "AI-related content role; should not be misclassified as technical AI engineering"
+  },
+  {
+    "job_id": "1471834",
+    "title": "Legal AI Specialist (Legal AI Platform)",
+    "company_name": "Datica",
+    "case": "complex",
+    "note": "Legal AI Specialist with substantial AI terminology but unusual professional requirements"
+  }
+]

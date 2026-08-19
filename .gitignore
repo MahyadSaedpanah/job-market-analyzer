@@ -1,2 +1,13 @@
 __pycache__/
-data/
+
+# Ignore generated/local datasets by default
+data/*
+
+# Keep the small reproducible benchmark dataset
+!data/benchmark/
+data/benchmark/*
+
+!data/benchmark/manifest.json
+!data/benchmark/jobs/
+data/benchmark/jobs/*
+!data/benchmark/jobs/*.json
