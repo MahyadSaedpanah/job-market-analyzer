@@ -256,8 +256,8 @@ SAMPLE_ANALYSIS = {
     ],
 
     "confidence": {
-        "role_classification": 0.99,
-        "seniority": 0.75,
+        "role_classification": 99,
+        "seniority": 75,
     },
 }
 

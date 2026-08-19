@@ -368,16 +368,21 @@ class EngineeringExpectation(SchemaModel):
 # ============================================================
 
 class ExtractionConfidence(SchemaModel):
-    role_classification: float = Field(
+    role_classification: int = Field(
         ge=0,
-        le=1,
+        le=100,
+        description=(
+            "Confidence percentage from 0 to 100."
+        ),
     )
 
-    seniority: float = Field(
+    seniority: int = Field(
         ge=0,
-        le=1,
+        le=100,
+        description=(
+            "Confidence percentage from 0 to 100."
+        ),
     )
-
 
 # ============================================================
 # Final AI output

@@ -511,6 +511,15 @@ Do not manufacture quotations.
 CONFIDENCE
 ==========
 
+Confidence values MUST be integers from 0 to 100.
+
+Examples:
+- 98 means very high confidence
+- 75 means moderate-to-high confidence
+- 40 means low confidence
+
+Do NOT use decimal values between 0 and 1.
+
 Confidence reflects confidence in the extraction/classification,
 not confidence in whether the advertisement itself is truthful.
 
