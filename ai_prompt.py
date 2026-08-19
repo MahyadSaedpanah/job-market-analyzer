@@ -122,30 +122,38 @@ other:
 TARGET GROUP
 ============
 
-core:
-The job is primarily one of:
+ROLE GROUPING RULES
+
+CORE:
+Roles whose primary responsibility is building, training, deploying, or analyzing machine learning/data systems.
+
+Examples:
 - data_scientist
 - data_analyst
 - machine_learning_engineer
 - ai_engineer
 
-adjacent:
-The role is strongly related and technically relevant, such as:
-- data_engineer
+
+ADJACENT:
+Roles related to data/AI but not the main target ML engineering/data science track.
+
+Examples:
 - bi_analyst
+- business_analyst
+- data_engineer
+- llm_engineer
+- ai_specialist
 - nlp_engineer
 - computer_vision_engineer
-- llm_engineer
-or another role with substantial Data/ML/AI technical responsibilities.
 
-irrelevant:
-The role mainly belongs to another profession even if it uses AI/data.
 
-Examples of likely irrelevant roles:
-- content creator who merely uses ChatGPT
-- marketer using AI tools
-- legal specialist using an AI platform without technical AI duties
-- ordinary business analyst with no meaningful data-analysis responsibilities
+IRRELEVANT:
+Roles where AI/data is only a tool and the main job is outside the target market.
+
+Examples:
+- content_creator
+- designer
+- marketing specialist using AI tools
 
 RELEVANCE SCORE
 ===============
