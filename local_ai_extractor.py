@@ -143,23 +143,58 @@ def extract_job(job):
     return response
 
 
-def fix_role_grouping(data):
-    role = (
-        data
-        .get("role_classification", {})
-        .get("primary_role")
+def fix_empty_responsibilities(data, job):
+    if data.get("responsibilities"):
+        return data
+
+    description = job.get(
+        "job_description",
+        ""
     )
 
-    if role in [
-        "bi_analyst",
-        "business_analyst",
-        "llm_engineer",
-        "ai_specialist",
-    ]:
-        data["role_classification"]["target_group"] = "adjacent"
+    if not description:
+        return data
+
+    lines = [
+        line.strip("-• \n")
+        for line in description.splitlines()
+        if len(line.strip()) > 20
+    ]
+
+    action_keywords = [
+        "develop",
+        "design",
+        "build",
+        "create",
+        "evaluate",
+        "analyze",
+        "implement",
+        "developing",
+        "طراحی",
+        "تحلیل",
+        "ایجاد",
+        "پیاده",
+        "آموزش",
+        "بررسی",
+    ]
+
+    extracted = []
+
+    for line in lines:
+        if any(
+            key.lower() in line.lower()
+            for key in action_keywords
+        ):
+            extracted.append(
+                {
+                    "text": line,
+                    "category": "other"
+                }
+            )
+
+    data["responsibilities"] = extracted[:8]
 
     return data
-
 
 def main():
     job = load_benchmark_job(
@@ -198,6 +233,11 @@ def main():
         data = json.loads(raw_content)
 
         data = fix_role_grouping(data)
+
+        data = fix_empty_responsibilities(
+            data,
+            job
+        )
 
         analysis = AIJobAnalysis.model_validate(data)
 
