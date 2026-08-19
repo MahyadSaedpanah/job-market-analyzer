@@ -3,11 +3,20 @@ import json
 import re
 from pathlib import Path
 
-from playwright.async_api import async_playwright
-
+from playwright.async_api import (
+    async_playwright,
+    Error as PlaywrightError,
+    TimeoutError as PlaywrightTimeoutError,
+)
 
 RAW_JOBS_PATH = Path("data/raw_jobs.json")
 PARSED_DIR = Path("data/parsed")
+
+FAILURES_PATH = Path("data/parse_failures.json")
+
+MAX_RETRIES = 3
+RETRY_DELAY_SECONDS = 3
+REQUEST_DELAY_MS = 1500
 
 
 TEST_JOB_IDS = [
@@ -654,12 +663,123 @@ def load_raw_jobs():
         return json.load(file)
 
 
-# --------------------------------------------------
-# Test runner
-# --------------------------------------------------
+def load_failures():
+    if not FAILURES_PATH.exists():
+        return {}
+
+    with FAILURES_PATH.open(
+        "r",
+        encoding="utf-8",
+    ) as file:
+        return json.load(file)
+
+
+def save_failures(failures):
+    FAILURES_PATH.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    with FAILURES_PATH.open(
+        "w",
+        encoding="utf-8",
+    ) as file:
+        json.dump(
+            failures,
+            file,
+            ensure_ascii=False,
+            indent=2,
+        )
+
+
+def parsed_job_exists(job_id):
+    output_path = (
+        PARSED_DIR
+        / f"job_{job_id}.json"
+    )
+
+    return output_path.exists()
+
+
+async def parse_job_with_retries(
+    page,
+    job_id,
+    url,
+    max_retries=MAX_RETRIES,
+):
+    last_error = None
+
+    for attempt in range(
+        1,
+        max_retries + 1,
+    ):
+        try:
+            job = await parse_job(
+                page=page,
+                job_id=job_id,
+                url=url,
+            )
+
+            return job, None
+
+        except (
+            PlaywrightTimeoutError,
+            PlaywrightError,
+            Exception,
+        ) as error:
+            last_error = error
+
+            print(
+                f"  Attempt "
+                f"{attempt}/{max_retries} failed"
+            )
+
+            print(
+                f"  {type(error).__name__}: "
+                f"{error}"
+            )
+
+            if attempt < max_retries:
+                wait_seconds = (
+                    RETRY_DELAY_SECONDS
+                    * attempt
+                )
+
+                print(
+                    f"  Retrying in "
+                    f"{wait_seconds}s..."
+                )
+
+                await page.wait_for_timeout(
+                    wait_seconds * 1000
+                )
+
+    return None, last_error
 
 async def main():
     raw_jobs = load_raw_jobs()
+
+    PARSED_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    failures = load_failures()
+
+    total_candidates = len(raw_jobs)
+
+    already_parsed = 0
+    parsed_this_run = 0
+    failed_this_run = 0
+
+    print("\n" + "=" * 70)
+    print("BULK JOB PARSER")
+    print("=" * 70)
+
+    print(
+        f"Total candidates: "
+        f"{total_candidates}"
+    )
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(
@@ -674,89 +794,193 @@ async def main():
             }
         )
 
-        for job_id in TEST_JOB_IDS:
-            raw_job = raw_jobs.get(
-                job_id
+        for index, (
+            job_id,
+            raw_job,
+        ) in enumerate(
+            raw_jobs.items(),
+            start=1,
+        ):
+            print(
+                "\n"
+                + "-" * 70
             )
 
-            if raw_job is None:
+            print(
+                f"[{index}/{total_candidates}] "
+                f"Job {job_id}"
+            )
+
+            # ----------------------------------
+            # Resume
+            # ----------------------------------
+
+            if parsed_job_exists(job_id):
+                already_parsed += 1
+
                 print(
-                    f"\nJob not found: "
-                    f"{job_id}"
+                    "✓ Already parsed — skipping"
                 )
+
                 continue
 
-            try:
-                job = await parse_job(
+            url = raw_job["url"]
+
+            # ----------------------------------
+            # Parse + retries
+            # ----------------------------------
+
+            job, error = (
+                await parse_job_with_retries(
                     page=page,
                     job_id=job_id,
-                    url=raw_job["url"],
+                    url=url,
                 )
+            )
 
-                output_path = (
-                    save_parsed_job(
-                        job
-                    )
-                )
+            # ----------------------------------
+            # Failed
+            # ----------------------------------
 
-                print(
-                    f"✓ {job_id}"
-                    f" | {job['title']}"
-                    f" | {job['company_name']}"
-                )
+            if job is None:
+                failed_this_run += 1
 
-                print(
-                    "  Experience:",
-                    job["experience"],
-                )
-
-                print(
-                    "  Software:",
-                    len(
-                        job["software"]
+                failures[job_id] = {
+                    "url": url,
+                    "error_type": (
+                        type(error).__name__
+                        if error
+                        else None
                     ),
-                )
-
-                print(
-                    "  Description chars:",
-                    len(
-                        job[
-                            "job_description"
-                        ]
+                    "error": (
+                        str(error)
+                        if error
+                        else None
                     ),
+                }
+
+                save_failures(
+                    failures
                 )
 
                 print(
-                    "  Education:",
-                    job["education"],
+                    f"✗ Failed permanently: "
+                    f"{job_id}"
                 )
 
-                print(
-                    "  Gender:",
-                    job["gender"],
+                continue
+
+            # ----------------------------------
+            # Success
+            # ----------------------------------
+
+            output_path = save_parsed_job(
+                job
+            )
+
+            parsed_this_run += 1
+
+            # اگر قبلاً failure بوده،
+            # بعد از موفقیت پاکش کن
+            if job_id in failures:
+                del failures[job_id]
+
+                save_failures(
+                    failures
                 )
 
-                print(
-                    f"  Saved: "
-                    f"{output_path}"
-                )
+            print(
+                f"✓ Parsed: "
+                f"{job['title']}"
+            )
 
-            except Exception as error:
-                print(
-                    f"✗ Failed: {job_id}"
-                )
+            print(
+                f"  Company: "
+                f"{job['company_name']}"
+            )
 
-                print(
-                    f"  "
-                    f"{type(error).__name__}: "
-                    f"{error}"
-                )
+            print(
+                f"  Experience: "
+                f"{job['experience']}"
+            )
 
+            print(
+                f"  Software: "
+                f"{len(job['software'])}"
+            )
+
+            print(
+                f"  Description chars: "
+                f"{len(job['job_description'])}"
+            )
+
+            print(
+                f"  Saved: "
+                f"{output_path}"
+            )
+
+            # فشار کمتر روی سایت
             await page.wait_for_timeout(
-                1500
+                REQUEST_DELAY_MS
             )
 
         await browser.close()
+
+    # ------------------------------------------
+    # Final statistics
+    # ------------------------------------------
+
+    total_parsed = len(
+        list(
+            PARSED_DIR.glob(
+                "job_*.json"
+            )
+        )
+    )
+
+    remaining = (
+        total_candidates
+        - total_parsed
+    )
+
+    print("\n" + "=" * 70)
+    print("PARSE SUMMARY")
+    print("=" * 70)
+
+    print(
+        f"Total candidates: "
+        f"{total_candidates}"
+    )
+
+    print(
+        f"Already parsed: "
+        f"{already_parsed}"
+    )
+
+    print(
+        f"Parsed this run: "
+        f"{parsed_this_run}"
+    )
+
+    print(
+        f"Failed this run: "
+        f"{failed_this_run}"
+    )
+
+    print(
+        f"Total parsed: "
+        f"{total_parsed}"
+    )
+
+    print(
+        f"Remaining: "
+        f"{remaining}"
+    )
+
+    print(
+        f"Failure log entries: "
+        f"{len(failures)}"
+    )
 
 
 if __name__ == "__main__":
