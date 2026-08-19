@@ -36,6 +36,8 @@ class PrimaryRole(str, Enum):
     MACHINE_LEARNING_ENGINEER = "machine_learning_engineer"
     AI_ENGINEER = "ai_engineer"
 
+    AI_SPECIALIST = "ai_specialist"
+
     DATA_ENGINEER = "data_engineer"
     BI_ANALYST = "bi_analyst"
     NLP_ENGINEER = "nlp_engineer"
