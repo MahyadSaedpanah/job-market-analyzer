@@ -105,3 +105,9 @@ Implemented:
 ✅ Benchmark evaluation
 
 The project is currently being improved for higher extraction quality and large-scale job market analysis.
+
+Author
+Mahyad Saedpanah
+
+GitHub:
+https://github.com/MahyadSaedpanah
