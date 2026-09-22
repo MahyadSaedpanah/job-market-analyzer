@@ -1,4 +1,4 @@
-# Job Market Analyzer
+# Job Market Analyzer - jobvision
 
 An AI-powered system for analyzing Artificial Intelligence and Data Science job markets using Large Language Models (LLMs).
 
@@ -105,3 +105,5 @@ Implemented:
 ✅ Benchmark evaluation
 
 The project is currently being improved for higher extraction quality and large-scale job market analysis.
+
+
